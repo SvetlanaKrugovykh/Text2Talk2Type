@@ -1,5 +1,6 @@
 const fs = require("fs")
 const path = require("path")
+const { execSync } = require("child_process")
 
 const TEMP_CATALOG = process.env.TEMP_CATALOG
 
@@ -20,30 +21,16 @@ module.exports.mergeMP3Files = async function (fileNamesArray, OUTPUT_FILE, sile
       return
     }
 
-    let sequence = []
-    let silenceAbs = null
-    if (silenceFile) {
-      silenceAbs = path.isAbsolute(silenceFile)
-        ? silenceFile
-        : path.resolve(TEMP_CATALOG, silenceFile)
-    }
-    for (const file of files) {
-      sequence.push(file)
-      if (silenceFile) sequence.push(silenceAbs)
-    }
+    const listFile = path.join(TEMP_CATALOG, `concat_list_${Date.now()}.txt`)
+    fs.writeFileSync(
+      listFile,
+      files.map(f => `file '${f.replace(/'/g, "'\\''")}'`).join('\n'),
+      "utf8"
+    )
 
-    const writeStream = fs.createWriteStream(OUTPUT_FILE)
+    execSync(`ffmpeg -y -f concat -safe 0 -i "${listFile}" -ar 24000 -ac 1 -b:a 64k "${OUTPUT_FILE}"`)
 
-    for (const file of sequence) {
-      if (fs.existsSync(file)) {
-        const data = fs.readFileSync(file)
-        writeStream.write(data)
-      } else {
-        console.warn(`File not found: ${file}`)
-      }
-    }
-
-    writeStream.end()
+    fs.unlinkSync(listFile)
     console.log(`File created: ${OUTPUT_FILE}`)
 
     const uniqueFiles = [...new Set(files)]
