@@ -43,7 +43,7 @@ module.exports.createDictationAudio = async function createDictationAudio({
   const results = await gTTsService.gTTs(queries, lang)
   const segmentFiles = results.map(r => r.filePath)
 
-  const silenceFile = path.join(TEMP_CATALOG, `silence_${timeout / 1000}s.mp3`)
+  const silenceFile = path.resolve(TEMP_CATALOG, `silence_${timeout / 1000}s.mp3`)
   await createSilenceFile(timeout / 1000, silenceFile)
 
   const dictationSequence = []
@@ -55,7 +55,7 @@ module.exports.createDictationAudio = async function createDictationAudio({
   }
 
   const outputFile = path.join(outDir, `dictation_${Date.now()}.mp3`)
-  await mergeMP3Files(dictationSequence, outputFile)
+  await mergeMP3Files(dictationSequence, outputFile, silenceFile)
 
   return outputFile
 }

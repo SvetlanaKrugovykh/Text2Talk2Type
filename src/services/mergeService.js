@@ -3,7 +3,7 @@ const path = require("path")
 
 const TEMP_CATALOG = process.env.TEMP_CATALOG
 
-module.exports.mergeMP3Files = async function (fileNamesArray, OUTPUT_FILE) {
+module.exports.mergeMP3Files = async function (fileNamesArray, OUTPUT_FILE, silenceFile = null) {
   try {
     const tempAbs = path.resolve(TEMP_CATALOG)
     const files = fileNamesArray
@@ -20,9 +20,21 @@ module.exports.mergeMP3Files = async function (fileNamesArray, OUTPUT_FILE) {
       return
     }
 
+    let sequence = []
+    let silenceAbs = null
+    if (silenceFile) {
+      silenceAbs = path.isAbsolute(silenceFile)
+        ? silenceFile
+        : path.resolve(TEMP_CATALOG, silenceFile)
+    }
+    for (const file of files) {
+      sequence.push(file)
+      if (silenceFile) sequence.push(silenceAbs)
+    }
+
     const writeStream = fs.createWriteStream(OUTPUT_FILE)
 
-    for (const file of files) {
+    for (const file of sequence) {
       if (fs.existsSync(file)) {
         const data = fs.readFileSync(file)
         writeStream.write(data)
