@@ -9,8 +9,6 @@ const SEGMENT_DURATION = parseFloat(process.env.SEGMENT_DURATION || '5')
 const REPEAT_EACH = parseInt(process.env.REPEAT_EACH || '2')
 
 const OUTPUT_DIR = path.resolve(__dirname, 'output')
-const TIMEOUT = parseInt(process.env.TIMEOUT) || 20000
-
 const TEMP_CATALOG = process.env.TEMP_CATALOG
 
 if (!fs.existsSync(OUTPUT_DIR)) {
@@ -26,9 +24,7 @@ if (!fs.existsSync(OUTPUT_DIR)) {
       textContent,
       segmentDuration: SEGMENT_DURATION,
       repeatEach: REPEAT_EACH,
-      timeout: TIMEOUT,
-      lang: 'pl',
-      outDir: 'out'
+      lang: 'pl'
     })
     console.log('Dictation audio file created:', dictationFile)
   } catch (error) {

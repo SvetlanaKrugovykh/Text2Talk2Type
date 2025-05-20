@@ -1,10 +1,9 @@
-const path = require('path')
 const gTTsService = require('./gTTsService')
-const { createSilenceFile } = require('./createSilenceFile')
 const { mergeMP3Files } = require('./mergeService')
-const fs = require('fs').promises
+const path = require('path')
 require('dotenv').config()
-const TEMP_CATALOG = process.env.TEMP_CATALOG
+
+const OUT_CATALOG = process.env.OUT_CATALOG || 'out'
 
 function estimateReadingTime(text, wpm = 150) {
   const words = text.trim().split(/\s+/).length
@@ -33,31 +32,29 @@ module.exports.createDictationAudio = async function createDictationAudio({
   textContent,
   segmentDuration,
   repeatEach,
-  timeout,
-  lang = 'pl',
-  outDir = 'out'
+  lang = 'pl'
 }) {
+
   const segments = splitTextByDuration(textContent, segmentDuration)
 
   const queries = segments.map(text => ({ text }))
   const results = await gTTsService.gTTs(queries, lang)
   const segmentFiles = results.map(r => r.filePath)
 
-  const silenceFile = path.resolve(TEMP_CATALOG, `silence_${timeout / 1000}s.mp3`)
-  await createSilenceFile(timeout / 1000, silenceFile)
+  const silenceFile = process.env.SILENCE_FILE
 
   const dictationSequence = []
   for (const file of segmentFiles) {
+    const relativeFile = file
     for (let i = 0; i < repeatEach; i++) {
-      dictationSequence.push(file)
+      dictationSequence.push(relativeFile)
       dictationSequence.push(silenceFile)
     }
   }
 
-  const outputFile = path.join(outDir, `dictation_${Date.now()}.mp3`)
-  await mergeMP3Files(dictationSequence, outputFile, silenceFile)
+  const outputFile = path.join(OUT_CATALOG, `dictation_${Date.now()}.mp3`)
+  await mergeMP3Files(dictationSequence, outputFile)
 
   return outputFile
 }
-
 
